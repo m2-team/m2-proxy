@@ -1,0 +1,22 @@
+{
+  "name": "m2-proxy",
+  "version": "0.0.1",
+  "description": "proxy for watch requests",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://pengxiulin@github.com/m2-team/m2-proxy.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/m2-team/m2-proxy/issues"
+  },
+  "homepage": "https://github.com/m2-team/m2-proxy#readme",
+  "dependencies": {
+    "mocha": "^2.4.5"
+  }
+}
