@@ -1,5 +1,6 @@
 "use strict";
 let http = require("http");
+// let os =  require("os");
 let PROXYPORT = 8000;
 
 http.createServer(function(request, response){
@@ -12,7 +13,7 @@ http.createServer(function(request, response){
             host : 'localhost',
             port : '80',
             method : request.method,
-            path : '/',
+            path : '',
             headers : request.headers
         };
         var hostArray = HOST.split(":");
@@ -21,13 +22,12 @@ http.createServer(function(request, response){
             opt.port = hostArray[1];
         }
         var urlArray = request.url.split('/');
-        if(urlArray.length>2){
+        if(urlArray.length>3){
             for (var i = 3; i < urlArray.length; i++) {
                 opt.path += "/" + urlArray[i];
             };
-        }else{
-            opt.path = "/";
         }
+        console.log(request.url, urlArray, opt);
         // 2. 发起请求，将内容转发给客户端
         var serverReq = http.request(opt, function(serverRes) {
             response.writeHead(serverRes.statusCode, serverRes.headers);
@@ -38,9 +38,20 @@ http.createServer(function(request, response){
             });
 
         }).on('error', function(e) {
-            // TODO 需要做异常处理
-            console.log(request.url);
-            console.log(e);
+            if(e.errno=="ETIMEDOUT"){
+                // 超时处理
+                response.writeHead(504, {});
+                response.end(e.message);
+            }else{
+                // 作为网关或者代理工作的服务器尝试执行请求时
+                // 从上游服务器接收到无效的响应
+                response.writeHead(502, {});
+                response.end(e.message);
+            }
+            console.log(request.url, e);
+        });
+        request.on("close", function(){
+            console.log("client closed");
         });
         serverReq.end();
     }else if(TYPE == "STATIC"){
@@ -57,10 +68,12 @@ http.createServer(function(request, response){
  * 获取类型
  * @param  {[string]} HOSTINFO  [传入的HOST名称]
  * @param  {[string]} URL       [传入的URL地址，用于区分指令和静态页面请求]
- * @return {[string]}           获取类型： STATIC, PROXY, DIRECTION
+ * @return {[string]}           获取类型： STATIC, PROXY, DIRECTION, MODIFY
  * STATIC: 静态资源请求
- * PROXY: 代理请求
+ * PROXY: 一般代理请求
  * DIRECTION: 代理信息查看和设置请求
+ * MODIFY: 代理修改过的内容
+ * HOSTS: 修改hosts信息
  */
 var getType = function(HOSTINFO, URL){
     var type = "PROXY";
