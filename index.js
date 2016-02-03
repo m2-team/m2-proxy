@@ -28,7 +28,6 @@ http.createServer(function(request, response){
         }else{
             opt.path = "/";
         }
-
         // 2. 发起请求，将内容转发给客户端
         var serverReq = http.request(opt, function(serverRes) {
             response.writeHead(serverRes.statusCode, serverRes.headers);
@@ -39,7 +38,9 @@ http.createServer(function(request, response){
             });
 
         }).on('error', function(e) {
-            console.log("Got error: " + e.message);
+            // TODO 需要做异常处理
+            console.log(request.url);
+            console.log(e);
         });
         serverReq.end();
     }else if(TYPE == "STATIC"){
