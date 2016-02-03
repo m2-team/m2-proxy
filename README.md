@@ -8,4 +8,14 @@
 5. 快速下载单个页面的所有静态资源
 6. 可以部署到远程服务器上，也可以本地运行直接测试
 ## 类型
-1. 修改
+1. 处理静态资源请求和请求控制
+- static
+- command
+2. 代理处理类
+- transparent — 不处理
+- delay:100 — 延迟发送请求
+- headers — 新增、修改请求Header信息
+- file — 修改请求的文件到本地
+- redirect — 跳转到某个其它地址
+- reset — reset请求
+- hosts — 修改hosts信息

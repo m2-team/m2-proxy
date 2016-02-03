@@ -1,16 +1,17 @@
 "use strict";
 let http = require("http");
 // let os =  require("os");
+let fs = require("fs");
 let PROXYPORT = 8000;
 
-http.createServer(function(request, response){
+let server = http.createServer(function(request, response){
     let HOST = request.headers.host;
     let URL = request.url;
     let TYPE = getType(HOST, URL);
     if(TYPE == "PROXY"){
         var data = "";//存放POST的数据内容
         request.on("data", function(d){
-            data = d;
+            data = d.toString("utf-8");
         }).on("end", function(){
             // 1. 解析请求内容，构建远端请求对象
             var opt = {
@@ -36,6 +37,7 @@ http.createServer(function(request, response){
                 response.writeHead(serverRes.statusCode, serverRes.headers);
                 serverRes.on('data',function(d){
                     response.write(d);
+                    // console.log(serverRes.headers, d.toString("utf-8"));
                 }).on('end', function(){
                     response.end();
                 });
@@ -53,15 +55,24 @@ http.createServer(function(request, response){
                 console.log(request.url, e);
             });
             if(request.method=="POST"){
-                console.log(request.url, data);
+                // console.log(request.url, data.toString("utf-8"));
                 serverReq.write(data);
             }
             serverReq.end();
         });
     }else if(TYPE == "STATIC"){
-        response.writeHead(200, {});
-        response.write("设置命令：networksetup -setwebproxy USB\\ Ethernet 127.0.0.1 8000\n");
-        response.end("关闭代理设置：networksetup -setwebproxystate USB\\ Ethernet off\n");
+        response.writeHead(200, {
+            "Content-Type" : "text/html;charset=utf-8"
+        });
+        // TODO 1. here should be modified by request url
+        // TODO 2. and should close connection correctly
+        var fileName = "static/index.html";
+        fs.readFile(fileName, function(err, data){
+            if(!err){
+                response.write(data);
+                response.end();
+            }
+        });
     }else if(TYPE == "DIRECTION"){
         response.writeHead(200, {});
         response.end("代理设置命令\n");
@@ -125,3 +136,15 @@ var HostUtil = {
         return false;
     }
 }
+var wsClients = [];
+// ws服务器用于与客户端通信
+// 发送收到的请求信息
+let WebSocketServer = require('ws').Server
+  , wss = new WebSocketServer({ server: server });
+wss.on('connection', function connection(ws) {
+    wsClients.push(ws);
+    ws.on('message', function incoming(message) {
+        console.log('received: %s', message);
+    });
+    ws.send('something');
+});

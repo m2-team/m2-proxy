@@ -4,7 +4,7 @@
   "description": "proxy for watch requests",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "echo ok\n"
   },
   "repository": {
     "type": "git",
@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/m2-team/m2-proxy#readme",
   "dependencies": {
-    "mocha": "^2.4.5"
+    "ws": "^1.0.1"
   }
 }

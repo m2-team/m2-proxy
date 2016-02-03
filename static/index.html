@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <pre>
+    设置命令：
+    sudo networksetup -setwebproxy USB\ Ethernet 127.0.0.1 8000
+
+    关闭命令：
+    sudo networksetup -setwebproxystate USB\ Ethernet off
+    </pre>
+<ul>
+    <li></li>
+</ul>
+<script src="http://cdn.bootcss.com/jquery/2.2.0/jquery.min.js"></script>
+<script>
+var ws = new WebSocket("ws://"+location.hostname+":"+location.port);
+ws.onopen = function(){
+    console.log("opened");
+    ws.send("world");
+    ws.close();
+}
+</script>
+</body>
+</html>
