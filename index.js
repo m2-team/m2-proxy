@@ -8,52 +8,56 @@ http.createServer(function(request, response){
     let URL = request.url;
     let TYPE = getType(HOST, URL);
     if(TYPE == "PROXY"){
-        // 1. 解析请求内容，构建远端请求对象
-        var opt = {
-            host : 'localhost',
-            port : '80',
-            method : request.method,
-            path : '',
-            headers : request.headers
-        };
-        var hostArray = HOST.split(":");
-        opt.host = hostArray[0];
-        if(hostArray.length>1){
-            opt.port = hostArray[1];
-        }
-        var urlArray = request.url.split('/');
-        if(urlArray.length>3){
-            for (var i = 3; i < urlArray.length; i++) {
-                opt.path += "/" + urlArray[i];
+        var data = "";//存放POST的数据内容
+        request.on("data", function(d){
+            data = d;
+        }).on("end", function(){
+            // 1. 解析请求内容，构建远端请求对象
+            var opt = {
+                host : 'localhost',
+                port : '80',
+                method : request.method,
+                path : '',
+                headers : request.headers
             };
-        }
-        console.log(request.url, urlArray, opt);
-        // 2. 发起请求，将内容转发给客户端
-        var serverReq = http.request(opt, function(serverRes) {
-            response.writeHead(serverRes.statusCode, serverRes.headers);
-            serverRes.on('data',function(d){
-                response.write(d);
-            }).on('end', function(){
-                response.end();
-            });
-
-        }).on('error', function(e) {
-            if(e.errno=="ETIMEDOUT"){
-                // 超时处理
-                response.writeHead(504, {});
-                response.end(e.message);
-            }else{
-                // 作为网关或者代理工作的服务器尝试执行请求时
-                // 从上游服务器接收到无效的响应
-                response.writeHead(502, {});
-                response.end(e.message);
+            var hostArray = HOST.split(":");
+            opt.host = hostArray[0];
+            if(hostArray.length>1){
+                opt.port = hostArray[1];
             }
-            console.log(request.url, e);
+            var urlArray = request.url.split('/');
+            if(urlArray.length>3){
+                for (var i = 3; i < urlArray.length; i++) {
+                    opt.path += "/" + urlArray[i];
+                };
+            }
+            // 2. 发起请求，将内容转发给客户端
+            var serverReq = http.request(opt, function(serverRes) {
+                response.writeHead(serverRes.statusCode, serverRes.headers);
+                serverRes.on('data',function(d){
+                    response.write(d);
+                }).on('end', function(){
+                    response.end();
+                });
+            }).on('error', function(e) {
+                if(e.errno=="ETIMEDOUT"){
+                    // 超时处理
+                    response.writeHead(504, {});
+                    response.end(e.message);
+                }else{
+                    // 作为网关或者代理工作的服务器尝试执行请求时
+                    // 从上游服务器接收到无效的响应
+                    response.writeHead(502, {});
+                    response.end(e.message);
+                }
+                console.log(request.url, e);
+            });
+            if(request.method=="POST"){
+                console.log(request.url, data);
+                serverReq.write(data);
+            }
+            serverReq.end();
         });
-        request.on("close", function(){
-            console.log("client closed");
-        });
-        serverReq.end();
     }else if(TYPE == "STATIC"){
         response.writeHead(200, {});
         response.write("设置命令：networksetup -setwebproxy USB\\ Ethernet 127.0.0.1 8000\n");
@@ -72,12 +76,11 @@ http.createServer(function(request, response){
  * STATIC: 静态资源请求
  * PROXY: 一般代理请求
  * DIRECTION: 代理信息查看和设置请求
- * MODIFY: 代理修改过的内容
- * HOSTS: 修改hosts信息
+ * MODIFY: 修改用户请求
  */
-var getType = function(HOSTINFO, URL){
+var getType = function(hostAndPort, URL){
     var type = "PROXY";
-    let HostInfoArray = HOSTINFO.split(":");
+    let HostInfoArray = hostAndPort.split(":");
     let hostName = HostInfoArray[0];
     var port = 80;
     if(HostInfoArray.length>1){
