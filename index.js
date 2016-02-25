@@ -78,7 +78,7 @@ let server = http.createServer(function(request, response){
         response.end("代理设置命令\n");
     }
 }).listen(PROXYPORT);
-
+console.log("http://localhost:"+PROXYPORT+"/");
 /**
  * 获取类型
  * @param  {[string]} HOSTINFO  [传入的HOST名称]
@@ -146,5 +146,10 @@ wss.on('connection', function connection(ws) {
     ws.on('message', function incoming(message) {
         console.log('received: %s', message);
     });
-    ws.send('something');
+    ws.send(JSON.stringify({
+        content : 1
+    }));
+    ws.on('close', function(e){
+        console.log("closed" + e);
+    });
 });
